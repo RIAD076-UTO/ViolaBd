@@ -51,14 +51,6 @@
             line-height: 1.5;
         }
         
-        .setup-section {
-            background-color: #fff8e1;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 5px solid #ffc107;
-        }
-        
         .table-container {
             overflow-x: auto;
             margin-bottom: 20px;
@@ -170,17 +162,6 @@
             color: #2c3e50;
         }
         
-        .config-panel {
-            background-color: #e8f5e9;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .config-panel input {
-            margin-bottom: 10px;
-        }
-        
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -209,26 +190,12 @@
             z-index: 1000;
         }
         
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .github-info {
-            background-color: #f3f4f6;
+        .local-storage-warning {
+            background-color: #ffebee;
             padding: 15px;
             border-radius: 5px;
-            margin-top: 20px;
-            border-left: 5px solid #6e5494;
+            margin-bottom: 20px;
+            border-left: 5px solid #f44336;
         }
     </style>
 </head>
@@ -236,33 +203,16 @@
     <div class="container">
         <header>
             <h1>Team Work Updates Tracker</h1>
-            <p class="description">A shared space for tracking daily office work updates</p>
+            <p class="description">A simple solution for tracking team updates</p>
         </header>
         
-        <div class="instructions">
-            <p><strong>Instructions:</strong> Add your daily work updates using the form below. Data is stored in a JSON file on GitHub.</p>
-            <p><strong>GitHub Pages URL:</strong> <a href="https://riad076-uto.github.io/ViolaBd/" target="_blank">https://riad076-uto.github.io/ViolaBd/</a></p>
+        <div class="local-storage-warning">
+            <h3>Simple Local Storage Version</h3>
+            <p>This version stores data in your browser's local storage. For team collaboration, each member should export their data and share it with you to combine.</p>
         </div>
         
-        <div class="setup-section">
-            <h3>GitHub Setup Instructions</h3>
-            <ol>
-                <li>Make sure you have a GitHub account</li>
-                <li>Generate a personal access token with repo permissions</li>
-                <li>Enter your GitHub details below</li>
-            </ol>
-            
-            <div class="config-panel">
-                <label for="github-username">GitHub Username:</label>
-                <input type="text" id="github-username" placeholder="Your GitHub username">
-                
-                <label for="github-token">GitHub Token:</label>
-                <input type="password" id="github-token" placeholder="Your GitHub personal access token">
-                
-                <button class="btn btn-primary" id="save-config">Save Configuration</button>
-                <button class="btn btn-primary" id="load-data">Load Data</button>
-                <div id="config-status"></div>
-            </div>
+        <div class="instructions">
+            <p><strong>Instructions:</strong> Add your daily work updates using the form below. Data is saved automatically in your browser.</p>
         </div>
         
         <div class="entry-form">
@@ -312,8 +262,9 @@
         </div>
         
         <div class="controls">
-            <button class="btn btn-primary" id="refresh-data">Refresh Data</button>
             <button class="btn btn-primary" id="export-btn">Export to CSV</button>
+            <button class="btn btn-danger" id="clear-all">Clear All Data</button>
+            <button class="btn btn-success" id="import-btn">Import Data</button>
         </div>
         
         <div class="table-container">
@@ -333,24 +284,10 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="8" style="text-align: center;">No data loaded yet. Configure your GitHub details above.</td>
+                        <td colspan="8" style="text-align: center;">No entries yet. Add your first work update above.</td>
                     </tr>
                 </tbody>
             </table>
-        </div>
-        
-        <div class="github-info">
-            <h3>How to Create a GitHub Personal Access Token</h3>
-            <ol>
-                <li>Go to GitHub.com and sign in to your account</li>
-                <li>Click your profile photo → Settings → Developer settings</li>
-                <li>Select "Personal access tokens" → "Tokens (classic)"</li>
-                <li>Click "Generate new token" → "Generate new token (classic)"</li>
-                <li>Give your token a descriptive name</li>
-                <li>Select the "repo" scope to grant full control of repositories</li>
-                <li>Click "Generate token" at the bottom of the page</li>
-                <li>Copy the token and save it in a secure place (you won't see it again)</li>
-            </ol>
         </div>
     </div>
     
@@ -358,103 +295,24 @@
         Data saved successfully!
     </div>
 
+    <input type="file" id="import-file" style="display: none;" accept=".json,.csv">
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('date').value = today;
             
-            const savedUsername = localStorage.getItem('githubUsername');
+            loadTableData();
             
-            if (savedUsername) document.getElementById('github-username').value = savedUsername;
-            
-            document.getElementById('save-config').addEventListener('click', function() {
-                const username = document.getElementById('github-username').value;
-                const token = document.getElementById('github-token').value;
-                
-                if (!username || !token) {
-                    alert('Please fill in all GitHub configuration fields');
-                    return;
-                }
-                
-                localStorage.setItem('githubUsername', username);
-                localStorage.setItem('githubToken', token);
-                
-                document.getElementById('config-status').textContent = 'Configuration saved!';
-                setTimeout(() => {
-                    document.getElementById('config-status').textContent = '';
-                }, 3000);
-            });
-            
-            document.getElementById('load-data').addEventListener('click', loadDataFromGitHub);
-            document.getElementById('refresh-data').addEventListener('click', loadDataFromGitHub);
-            
-            document.getElementById('add-entry').addEventListener('click', function() {
-                const username = localStorage.getItem('githubUsername');
-                const token = localStorage.getItem('githubToken');
-                
-                if (!username || !token) {
-                    alert('Please configure your GitHub details first');
-                    return;
-                }
-                
-                addEntryToGitHub(username, token);
-            });
-            
+            document.getElementById('add-entry').addEventListener('click', addEntry);
             document.getElementById('export-btn').addEventListener('click', exportToCSV);
+            document.getElementById('clear-all').addEventListener('click', clearAllData);
+            document.getElementById('import-btn').addEventListener('click', () => {
+                document.getElementById('import-file').click();
+            });
+            document.getElementById('import-file').addEventListener('change', importData);
             
-            function loadDataFromGitHub() {
-                const username = localStorage.getItem('githubUsername');
-                
-                if (!username) {
-                    alert('Please configure your GitHub details first');
-                    return;
-                }
-                
-                const statusElement = document.getElementById('config-status');
-                statusElement.innerHTML = '<div class="loading"></div> Loading data from GitHub...';
-                
-                fetch(`https://riad076-uto.github.io/ViolaBd/data.json`)
-                    .then(response => response.json())
-                    .then(jsonData => {
-                        displayData(jsonData);
-                        statusElement.textContent = 'Data loaded successfully!';
-                    })
-                    .catch(error => {
-                        console.error('Error loading data:', error);
-                        statusElement.textContent = 'Error loading data. Please check your configuration.';
-                    });
-            }
-            
-            function displayData(jsonData) {
-                const tableBody = document.querySelector('#updates-table tbody');
-                tableBody.innerHTML = '';
-                
-                if (!jsonData || jsonData.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No data found in repository.</td></tr>';
-                    return;
-                }
-                
-                jsonData.forEach((entry, index) => {
-                    const newRow = document.createElement('tr');
-                    
-                    newRow.innerHTML = `
-                        <td>${escapeHtml(entry.name)}</td>
-                        <td>${formatDate(entry.date)}</td>
-                        <td>${escapeHtml(entry.project)}</td>
-                        <td>${escapeHtml(entry.tasks)}</td>
-                        <td>${entry.hours}</td>
-                        <td>${entry.status}</td>
-                        <td>${escapeHtml(entry.notes)}</td>
-                        <td>
-                            <button class="btn btn-danger" onclick="deleteEntry(${index})">Delete</button>
-                        </td>
-                    `;
-                    
-                    tableBody.appendChild(newRow);
-                });
-            }
-            
-            function addEntryToGitHub(username, token) {
+            function addEntry() {
                 const name = document.getElementById('name').value;
                 const date = document.getElementById('date').value;
                 const project = document.getElementById('project').value;
@@ -468,124 +326,86 @@
                     return;
                 }
                 
-                const statusElement = document.getElementById('config-status');
-                statusElement.innerHTML = '<div class="loading"></div> Saving data to GitHub...';
+                const entry = {
+                    name,
+                    date,
+                    project,
+                    tasks,
+                    hours,
+                    status,
+                    notes
+                };
                 
-                fetch(`https://riad076-uto.github.io/ViolaBd/data.json`)
-                .then(response => response.json())
-                .then(currentContent => {
-                    const newEntry = {
-                        name,
-                        date,
-                        project,
-                        tasks,
-                        hours,
-                        status,
-                        notes
-                    };
-                    
-                    currentContent.push(newEntry);
-                    
-                    const content = btoa(JSON.stringify(currentContent, null, 2));
-                    
-                    return fetch(`https://api.github.com/repos/RIAD076-UTO/ViolaBd/contents/data.json`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: 'Add new work entry',
-                            content: content,
-                            sha: '' 
-                        })
-                    });
-                })
-                .then(response => response.json())
-                .then(data => {
-                    statusElement.textContent = 'Data saved to GitHub successfully!';
-                    loadDataFromGitHub();
-                    
-                    document.getElementById('name').value = '';
-                    document.getElementById('project').value = '';
-                    document.getElementById('tasks').value = '';
-                    document.getElementById('hours').value = '';
-                    document.getElementById('status').value = 'Completed';
-                    document.getElementById('notes').value = '';
-                    
-                    showNotification('Entry added successfully!');
-                })
-                .catch(error => {
-                    console.error('Error saving data:', error);
-                    statusElement.textContent = 'Error saving data. Please check your configuration.';
-                });
+                const existingData = JSON.parse(localStorage.getItem('workUpdates')) || [];
+                existingData.push(entry);
+                localStorage.setItem('workUpdates', JSON.stringify(existingData));
+                
+                loadTableData();
+                
+                document.getElementById('name').value = '';
+                document.getElementById('project').value = '';
+                document.getElementById('tasks').value = '';
+                document.getElementById('hours').value = '';
+                document.getElementById('status').value = 'Completed';
+                document.getElementById('notes').value = '';
+                
+                showNotification('Entry added successfully!');
             }
             
-            window.deleteEntry = function(index) {
-                const username = localStorage.getItem('githubUsername');
-                const token = localStorage.getItem('githubToken');
+            function loadTableData() {
+                const tableBody = document.querySelector('#updates-table tbody');
+                tableBody.innerHTML = '';
                 
-                if (!username || !token) {
-                    alert('Please configure your GitHub details first');
+                const data = JSON.parse(localStorage.getItem('workUpdates')) || [];
+                
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No entries yet. Add your first work update above.</td></tr>';
                     return;
                 }
                 
-                if (confirm('Are you sure you want to delete this entry?')) {
-                    const statusElement = document.getElementById('config-status');
-                    statusElement.innerHTML = '<div class="loading"></div> Deleting entry...';
+                data.forEach((entry, index) => {
+                    const row = document.createElement('tr');
                     
-                    fetch(`https://riad076-uto.github.io/ViolaBd/data.json`)
-                    .then(response => response.json())
-                    .then(currentContent => {
-                        currentContent.splice(index, 1);
-                        
-                        const content = btoa(JSON.stringify(currentContent, null, 2));
-                        
-                        return fetch(`https://api.github.com/repos/RIAD076-UTO/ViolaBd/contents/data.json`, {
-                            method: 'PUT',
-                            headers: {
-                                'Authorization': `token ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                message: 'Delete work entry',
-                                content: content,
-                                sha: '' 
-                            })
-                        });
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        statusElement.textContent = 'Entry deleted successfully!';
-                        loadDataFromGitHub();
-                    })
-                    .catch(error => {
-                        console.error('Error deleting entry:', error);
-                        statusElement.textContent = 'Error deleting entry.';
-                    });
-                }
-            };
+                    row.innerHTML = `
+                        <td>${escapeHtml(entry.name)}</td>
+                        <td>${formatDate(entry.date)}</td>
+                        <td>${escapeHtml(entry.project)}</td>
+                        <td>${escapeHtml(entry.tasks)}</td>
+                        <td>${entry.hours}</td>
+                        <td>${entry.status}</td>
+                        <td>${escapeHtml(entry.notes)}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteEntry(${index})">Delete</button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+            }
             
             function exportToCSV() {
-                const table = document.getElementById('updates-table');
-                let csvContent = '';
+                const data = JSON.parse(localStorage.getItem('workUpdates')) || [];
                 
-                const headers = [];
-                for (let i = 0; i < table.rows[0].cells.length - 1; i++) {
-                    headers.push('"' + table.rows[0].cells[i].textContent + '"');
+                if (data.length === 0) {
+                    alert('No data to export.');
+                    return;
                 }
-                csvContent += headers.join(',') + '\n';
                 
-                for (let i = 1; i < table.rows.length; i++) {
-                    const row = table.rows[i];
-                    const rowData = [];
+                let csvContent = 'Name,Date,Project/Department,Tasks Completed,Hours,Status,Notes\n';
+                
+                data.forEach(entry => {
+                    const row = [
+                        escapeCsv(entry.name),
+                        entry.date,
+                        escapeCsv(entry.project),
+                        escapeCsv(entry.tasks),
+                        entry.hours,
+                        entry.status,
+                        escapeCsv(entry.notes)
+                    ];
                     
-                    for (let j = 0; j < row.cells.length - 1; j++) {
-                        rowData.push('"' + row.cells[j].textContent + '"');
-                    }
-                    
-                    csvContent += rowData.join(',') + '\n';
-                }
+                    csvContent += row.join(',') + '\n';
+                });
                 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
@@ -600,15 +420,90 @@
                 showNotification('Data exported to CSV successfully!');
             }
             
+            function clearAllData() {
+                if (confirm('Are you sure you want to delete all data? This cannot be undone.')) {
+                    localStorage.removeItem('workUpdates');
+                    loadTableData();
+                    showNotification('All data has been cleared.');
+                }
+            }
+            
+            function importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        let importedData;
+                        if (file.name.endsWith('.json')) {
+                            importedData = JSON.parse(e.target.result);
+                        } else if (file.name.endsWith('.csv')) {
+                            importedData = parseCSV(e.target.result);
+                        } else {
+                            throw new Error('Unsupported file format');
+                        }
+                        
+                        const existingData = JSON.parse(localStorage.getItem('workUpdates')) || [];
+                        const combinedData = [...existingData, ...importedData];
+                        localStorage.setItem('workUpdates', JSON.stringify(combinedData));
+                        loadTableData();
+                        showNotification('Data imported successfully!');
+                    } catch (error) {
+                        alert('Error importing data: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            
+            function parseCSV(csvData) {
+                const lines = csvData.split('\n');
+                const result = [];
+                
+                const headers = lines[0].split(',').map(header => header.trim());
+                
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    
+                    const obj = {};
+                    const currentline = lines[i].split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+                    
+                    for (let j = 0; j < headers.length; j++) {
+                        obj[headers[j].toLowerCase().replace(/\s+\//g, '').replace(/\s+/g, '_')] = currentline[j];
+                    }
+                    
+                    result.push(obj);
+                }
+                
+                return result;
+            }
+            
+            window.deleteEntry = function(index) {
+                if (confirm('Are you sure you want to delete this entry?')) {
+                    const data = JSON.parse(localStorage.getItem('workUpdates')) || [];
+                    data.splice(index, 1);
+                    localStorage.setItem('workUpdates', JSON.stringify(data));
+                    loadTableData();
+                    showNotification('Entry deleted successfully!');
+                }
+            };
+            
             function escapeHtml(text) {
-                if (!text) return '';
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
             }
             
+            function escapeCsv(value) {
+                if (value === null || value === undefined) return '';
+                const stringValue = String(value);
+                if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                    return '"' + stringValue.replace(/"/g, '""') + '"';
+                }
+                return stringValue;
+            }
+            
             function formatDate(dateString) {
-                if (!dateString) return '';
                 const options = { year: 'numeric', month: 'short', day: 'numeric' };
                 return new Date(dateString).toLocaleDateString(undefined, options);
             }
@@ -621,10 +516,6 @@
                 setTimeout(() => {
                     notification.style.display = 'none';
                 }, 3000);
-            }
-            
-            if (savedUsername) {
-                loadDataFromGitHub();
             }
         });
     </script>

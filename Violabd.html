@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Work Updates Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        .instructions {
+            background-color: #e1f5fe;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .setup-section {
+            background-color: #fff8e1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ffc107;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #2c3e50;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .entry-form {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .config-panel {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .config-panel input {
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Team Work Updates Tracker</h1>
+            <p class="description">A shared space for tracking daily office work updates</p>
+        </header>
+        
+        <div class="instructions">
+            <p><strong>Instructions:</strong> Add your daily work updates using the form below. Data is stored in a shared Google Sheet.</p>
+        </div>
+        
+        <div class="setup-section">
+            <h3>Google Sheets Setup</h3>
+            <p>To connect to your Google Sheet:</p>
+            <ol>
+                <li>Create a Google Sheet with columns: Name, Date, Project, Tasks, Hours, Status, Notes</li>
+                <li>Click "Share" and set to "Anyone with the link can view"</li>
+                <li>Copy the Sheet ID from the URL (the long string between /d/ and /edit)</li>
+                <li>Paste your Sheet ID below and click "Load Data"</li>
+            </ol>
+            
+            <div class="config-panel">
+                <label for="sheet-id">Google Sheet ID:</label>
+                <input type="text" id="sheet-id" placeholder="Paste your Google Sheet ID here">
+                <button class="btn btn-primary" id="load-sheet">Load Data</button>
+                <div id="sheet-status"></div>
+            </div>
+        </div>
+        
+        <div class="entry-form">
+            <h2>Add New Entry</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" id="name" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date">
+                </div>
+                <div class="form-group">
+                    <label for="project">Project/Department</label>
+                    <input type="text" id="project" placeholder="Project or department name">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="tasks">Tasks Completed</label>
+                <textarea id="tasks" placeholder="List the tasks you completed today"></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="hours">Hours Worked</label>
+                    <input type="number" id="hours" placeholder="Number of hours" min="0" max="24" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status">
+                        <option value="Completed">Completed</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Blocked">Blocked</option>
+                        <option value="Not Started">Not Started</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">Notes / Next Steps</label>
+                <textarea id="notes" placeholder="Any notes or next steps"></textarea>
+            </div>
+            
+            <button class="btn btn-primary" id="add-entry">Add Entry</button>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" id="refresh-data">Refresh Data</button>
+            <button class="btn btn-primary" id="export-btn">Export to CSV</button>
+        </div>
+        
+        <div class="table-container">
+            <h2>Work Updates</h2>
+            <table id="updates-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Date</th>
+                        <th>Project/Department</th>
+                        <th>Tasks Completed</th>
+                        <th>Hours</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No data loaded yet. Configure your Google Sheet ID above.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        Data saved successfully!
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            
+            // Load saved sheet ID if available
+            const savedSheetId = localStorage.getItem('googleSheetId');
+            if (savedSheetId) {
+                document.getElementById('sheet-id').value = savedSheetId;
+            }
+            
+            // Load data button event
+            document.getElementById('load-sheet').addEventListener('click', function() {
+                const sheetId = document.getElementById('sheet-id').value;
+                if (!sheetId) {
+                    alert('Please enter a Google Sheet ID');
+                    return;
+                }
+                
+                // Save sheet ID for future use
+                localStorage.setItem('googleSheetId', sheetId);
+                
+                // Load data from Google Sheets
+                loadDataFromSheets(sheetId);
+            });
+            
+            // Refresh data button event
+            document.getElementById('refresh-data').addEventListener('click', function() {
+                const sheetId = document.getElementById('sheet-id').value;
+                if (!sheetId) {
+                    alert('Please configure your Google Sheet ID first');
+                    return;
+                }
+                loadDataFromSheets(sheetId);
+            });
+            
+            // Add entry button event
+            document.getElementById('add-entry').addEventListener('click', function() {
+                const sheetId = document.getElementById('sheet-id').value;
+                if (!sheetId) {
+                    alert('Please configure your Google Sheet ID first');
+                    return;
+                }
+                
+                addEntryToSheets(sheetId);
+            });
+            
+            // Export button event
+            document.getElementById('export-btn').addEventListener('click', function() {
+                exportToCSV();
+            });
+            
+            // Function to load data from Google Sheets
+            function loadDataFromSheets(sheetId) {
+                const statusElement = document.getElementById('sheet-status');
+                statusElement.innerHTML = '<div class="loading"></div> Loading data from Google Sheets...';
+                
+                // Using a CORS proxy to avoid same-origin policy issues
+                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                const targetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+                
+                fetch(proxyUrl + targetUrl)
+                    .then(response => response.text())
+                    .then(data => {
+                        // The data comes with a prefix that we need to remove
+                        const jsonData = JSON.parse(data.substring(47).slice(0, -2));
+                        displayData(jsonData);
+                        statusElement.textContent = 'Data loaded successfully!';
+                    })
+                    .catch(error => {
+                        console.error('Error loading data:', error);
+                        statusElement.textContent = 'Error loading data. Please check your Sheet ID and sharing settings.';
+                    });
+            }
+            
+            // Function to display data in the table
+            function displayData(jsonData) {
+                const tableBody = document.querySelector('#updates-table tbody');
+                tableBody.innerHTML = '';
+                
+                if (!jsonData.table || !jsonData.table.rows || jsonData.table.rows.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No data found in the sheet.</td></tr>';
+                    return;
+                }
+                
+                // Skip the header row (index 0)
+                for (let i = 1; i < jsonData.table.rows.length; i++) {
+                    const row = jsonData.table.rows[i];
+                    const newRow = document.createElement('tr');
+                    
+                    newRow.innerHTML = `
+                        <td>${row.c[0] ? escapeHtml(row.c[0].v) : ''}</td>
+                        <td>${row.c[1] ? formatDate(row.c[1].v) : ''}</td>
+                        <td>${row.c[2] ? escapeHtml(row.c[2].v) : ''}</td>
+                        <td>${row.c[3] ? escapeHtml(row.c[3].v) : ''}</td>
+                        <td>${row.c[4] ? row.c[4].v : ''}</td>
+                        <td>${row.c[5] ? row.c[5].v : ''}</td>
+                        <td>${row.c[6] ? escapeHtml(row.c[6].v) : ''}</td>
+                    `;
+                    
+                    tableBody.appendChild(newRow);
+                }
+            }
+            
+            // Function to add entry to Google Sheets (using Google Forms as a workaround)
+            function addEntryToSheets(sheetId) {
+                const name = document.getElementById('name').value;
+                const date = document.getElementById('date').value;
+                const project = document.getElementById('project').value;
+                const tasks = document.getElementById('tasks').value;
+                const hours = document.getElementById('hours').value;
+                const status = document.getElementById('status').value;
+                const notes = document.getElementById('notes').value;
+                
+                if (!name || !date || !tasks) {
+                    alert('Please fill in at least Name, Date, and Tasks fields.');
+                    return;
+                }
+                
+                // For a proper implementation, you would use the Google Sheets API
+                // This is a simplified approach that requires a Google Form connected to your Sheet
+                alert('To add data to Google Sheets, you need to set up a Google Form connected to your Sheet. For now, please manually add the data to your Sheet.');
+                
+                // Clear form
+                document.getElementById('name').value = '';
+                document.getElementById('project').value = '';
+                document.getElementById('tasks').value = '';
+                document.getElementById('hours').value = '';
+                document.getElementById('status').value = 'Completed';
+                document.getElementById('notes').value = '';
+                
+                showNotification('Please add the entry manually to your Google Sheet');
+            }
+            
+            // Function to export data to CSV
+            function exportToCSV() {
+                const table = document.getElementById('updates-table');
+                let csvContent = '';
+                
+                // Get headers
+                const headers = [];
+                for (let i = 0; i < table.rows[0].cells.length; i++) {
+                    headers.push('"' + table.rows[0].cells[i].textContent + '"');
+                }
+                csvContent += headers.join(',') + '\n';
+                
+                // Get data rows
+                for (let i = 1; i < table.rows.length; i++) {
+                    const row = table.rows[i];
+                    const rowData = [];
+                    
+                    for (let j = 0; j < row.cells.length; j++) {
+                        rowData.push('"' + row.cells[j].textContent + '"');
+                    }
+                    
+                    csvContent += rowData.join(',') + '\n';
+                }
+                
+                // Create download link
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'work_updates.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('Data exported to CSV successfully!');
+            }
+            
+            // Helper function to escape HTML
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            // Helper function to format date
+            function formatDate(dateString) {
+                if (!dateString) return '';
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return new Date(dateString).toLocaleDateString(undefined, options);
+            }
+            
+            // Function to show notification
+            function showNotification(message) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.style.display = 'block';
+                
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
+            
+            // If we have a saved sheet ID, try to load data automatically
+            if (savedSheetId) {
+                loadDataFromSheets(savedSheetId);
+            }
+        });
+    </script>
+</body>
+</html>
